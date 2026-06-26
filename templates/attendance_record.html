@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Historical Attendance Records Ledger</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body{ background:#f4f7fb; font-family:'Segoe UI',sans-serif; }
+        .main-card{ border:none; border-radius:18px; box-shadow:0 10px 25px rgba(0,0,0,0.08); }
+        .page-title{ font-weight:700; color:#0f172a; }
+        .table-responsive{ border-radius:12px; overflow:hidden; }
+        .filter-btn{ min-width:110px; }
+        .search-box{ max-width:350px; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title">Attendance Records Ledger</h2>
+        <div>
+            <a href="/download_csv" class="btn btn-success me-2">Download Analytics CSV</a>
+            <a href="/" class="btn btn-outline-secondary">Dashboard</a>
+        </div>
+    </div>
+
+    <div class="card main-card">
+        <div class="card-body p-4">
+            
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" id="searchInput" class="form-control search-box shadow-sm" placeholder="Search student name or record logs...">
+                </div>
+                <div class="col-md-7 text-md-end mt-3 mt-md-0">
+                    <a href="/attendance_record?period=all" class="btn {% if period == 'all' or not period %}btn-primary{% else %}btn-outline-primary{% endif %} filter-btn m-1">All Records</a>
+                    <a href="/attendance_record?period=daily" class="btn {% if period == 'daily' %}btn-success{% else %}btn-outline-success{% endif %} filter-btn m-1">Daily</a>
+                    <a href="/attendance_record?period=weekly" class="btn {% if period == 'weekly' %}btn-warning{% else %}btn-outline-warning{% endif %} filter-btn m-1">Weekly</a>
+                    <a href="/attendance_record?period=monthly" class="btn {% if period == 'monthly' %}btn-danger{% else %}btn-outline-danger{% endif %} filter-btn m-1">Monthly</a>
+                </div>
+            </div>
+
+            <div class="table-responsive shadow-sm">
+                <table class="table table-striped table-hover align-middle mb-0" id="attendanceTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Record Index</th>
+                            <th>Student ID (Database Key)</th>
+                            <th>Student Registered Name</th>
+                            <th>Timestamp Logged (UTC ISO)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% if records %}
+                        {% for r in records %}
+                        <tr>
+                            <td class="fw-medium text-secondary">{{ r[0] }}</td>
+                            <td class="font-monospace fw-bold text-primary">{{ r[1] }}</td>
+                            <td class="fw-semibold">{{ r[2] }}</td>
+                            <td class="text-muted">{{ r[3] }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted fw-medium">No verified entry records matched for this filtering scale.</td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#attendanceTable tbody tr");
+
+    rows.forEach(row => {
+        // Skip check if it is the empty data row placeholder
+        if (row.cells.length === 1) return;
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+    });
+});
+</script>
+</body>
+</html>

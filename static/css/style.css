@@ -1,0 +1,160 @@
+/* =========================
+   Global Styles
+   ========================= */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* FIXED: Changed 'contain' to 'cover' to prevent white gaps or image repeat artifacts */
+  background: url('static/images/bg.png') no-repeat center center fixed;
+  background-size: cover;
+  color: #1e293b;
+  display: flex;                 /* Right-side alignment framework */
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 2rem;                 /* Spacing around your control layout panel */
+}
+
+/* Optional overlay if background is busy */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4);
+  z-index: -1;
+} 
+
+h5, h4, h3 {
+  font-weight: 600;
+}
+
+/* =========================
+   Right Panel Wrapper
+   ========================= */
+.right-panel {
+  width: 420px;                       /* Hard-fixed column HUD width */
+  max-width: 90vw;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);        /* Adds a beautiful frosted glass aesthetic */
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;                  /* Scrollbar activates if elements wrap vertically */
+  max-height: calc(100vh - 4rem);     /* Keeps the container from overextending the screen viewport */
+}
+
+/* FIXED: Hardens structural integrity when nesting native Bootstrap row components */
+.right-panel .row {
+  margin: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;            /* Clean vertical rhythm pacing */
+}
+
+/* FIXED: Safely normalizes Bootstrap column rules to stretch completely within the 420px slot */
+.right-panel [class*="col-"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 100% !important;
+  padding: 0 !important;
+}
+
+/* =========================
+   Card Styles
+   ========================= */
+.card {
+  border: none;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.card h5 {
+  color: #0f172a;
+}
+
+.card .btn {
+  border-radius: 0.6rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.card .btn-primary:hover,
+.card .btn-success:hover,
+.card .btn-warning:hover {
+  filter: brightness(0.95);
+}
+
+/* =========================
+   Progress Bar & Chart
+   ========================= */
+.progress {
+  background-color: #e2e8f0;
+  border-radius: 1rem;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  font-weight: 600;
+  border-radius: 1rem;
+}
+
+#attendanceChart {
+  max-height: 280px; /* Slightly scaled down to elegantly slide inside the 420px panel frame */
+}
+
+/* =========================
+   Navbar & Utilities
+   ========================= */
+.navbar {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.navbar-brand {
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+}
+
+.btn-outline-light {
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.text-muted {
+  color: #64748b !important;
+}
+
+.shadow-sm {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+/* =========================
+   Responsive Viewport Adaptive Layout
+   ========================= */
+@media (max-width: 768px) {
+  body {
+    justify-content: center;          /* Centers panel layout flatly on mobile form factors */
+    padding: 1rem;
+    align-items: center;
+  }
+  .right-panel {
+    width: 100%;
+    max-width: 500px;
+    max-height: calc(100vh - 2rem);
+  }
+}

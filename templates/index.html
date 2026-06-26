@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Smart Attendance System</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    background:#f4f7fb;
+    font-family:'Segoe UI',sans-serif;
+}
+
+.navbar-custom{
+    background:#0f172a;
+}
+
+.navbar-brand{
+    font-weight:700;
+}
+
+.dashboard-title{
+    font-weight:700;
+    color:#0f172a;
+}
+
+.stat-card{
+    border:none;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+    transition:0.2s;
+}
+
+.stat-card:hover{
+    transform:translateY(-4px);
+}
+
+.action-card{
+    border:none;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+.chart-card{
+    border:none;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+.big-number{
+    font-size:32px;
+    font-weight:700;
+}
+
+.progress{
+    height:24px;
+    border-radius:15px;
+}
+
+.progress-bar{
+    font-weight:600;
+}
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm">
+<div class="container">
+
+<a class="navbar-brand" href="/">
+Smart Attendance System
+</a>
+
+<div class="d-flex gap-2">
+
+<a href="/add_student" class="btn btn-outline-light btn-sm">
+Add Student
+</a>
+
+<a href="/manage_students" class="btn btn-outline-light btn-sm">
+Manage Students
+</a>
+
+<a href="/mark_attendance" class="btn btn-outline-light btn-sm">
+Mark Attendance
+</a>
+
+<a href="/attendance_record" class="btn btn-outline-light btn-sm">
+Attendance Records
+</a>
+
+</div>
+
+</div>
+</nav>
+
+<div class="container py-4">
+
+<h2 class="dashboard-title mb-4">
+Dashboard
+</h2>
+
+<div class="row g-4">
+
+<div class="col-md-4">
+
+<div class="card stat-card p-4">
+<h6 class="text-muted">Face Recognition</h6>
+<div class="big-number text-primary">
+AI
+</div>
+<p class="mb-0 text-muted">
+OpenCV + Random Forest
+</p>
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="card stat-card p-4">
+<h6 class="text-muted">Database</h6>
+<div class="big-number text-success">
+SQL
+</div>
+<p class="mb-0 text-muted">
+SQLite Storage
+</p>
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="card stat-card p-4">
+<h6 class="text-muted">Backend</h6>
+<div class="big-number text-danger">
+Flask
+</div>
+<p class="mb-0 text-muted">
+Python Web Framework
+</p>
+</div>
+
+</div>
+
+</div>
+
+<div class="row mt-4 g-4">
+
+<div class="col-lg-4">
+
+<div class="card action-card p-4">
+
+<h5>Quick Actions</h5>
+
+<div class="d-grid gap-3 mt-3">
+
+<a href="/add_student" class="btn btn-primary">
+Register Student
+</a>
+
+<a href="/manage_students" class="btn btn-secondary text-white">
+Manage Directory
+</a>
+
+<a href="/mark_attendance" class="btn btn-success">
+Start Attendance
+</a>
+
+<a href="/attendance_record" class="btn btn-warning">
+View Records
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-8">
+
+<div class="card action-card p-4">
+
+<div class="d-flex justify-content-between align-items-center">
+
+<h5 class="mb-0">
+Train Recognition Model
+</h5>
+
+<button id="trainBtn"
+class="btn btn-outline-primary">
+Start Training
+</button>
+
+</div>
+
+<div class="mt-4">
+
+<div class="progress">
+
+<div id="trainProgress"
+class="progress-bar bg-primary"
+style="width:0%">
+0%
+</div>
+
+</div>
+
+<div id="trainMsg"
+class="small text-muted mt-2">
+Model not trained yet.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="row mt-4">
+
+<div class="col-12">
+
+<div class="card chart-card p-4">
+
+<h5 class="mb-3">
+Attendance Analytics (Last 30 Days)
+</h5>
+
+<div style="height:400px;">
+<canvas id="attendanceChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>

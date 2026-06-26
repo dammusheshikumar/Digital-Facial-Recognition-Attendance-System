@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students & Re-enrollment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Face Attendance System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="/add_student">Add Student</a>
+                <a class="nav-link active" href="/manage_students">Manage Students</a>
+                <a class="nav-link" href="/attendance_record">Records</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-content-center">
+                <h4 class="mb-0 py-1">Registered Students Directory</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>DB Key</th>
+                                <th>Name</th>
+                                <th>Roll No</th>
+                                <th>Branch/Class</th>
+                                <th>Section</th>
+                                <th>Reg No</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Loading profiles...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RE-ENROLLMENT MODAL WINDOW -->
+    <div class="modal fade" id="reenrollModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="modalTitle">Re-enroll Face Dataset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopCamera()"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="text-danger">Warning: Re-enrolling will save new baseline pictures into this student's database storage directory.</p>
+                    
+                    <!-- Webcam stream viewer frame -->
+                    <div class="d-flex justify-content-center mb-3">
+                        <video id="webcam" autoplay playsinline width="400" height="300" class="border rounded bg-dark"></video>
+                    </div>
+
+                    <!-- Progress state UI counters -->
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div id="captureProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;">0%</div>
+                    </div>
+                    <p id="statusText" class="fw-bold text-secondary">Camera ready</p>
+                    
+                    <input type="hidden" id="currentStudentId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopCamera()">Cancel</button>
+                    <button type="button" id="startCaptureBtn" class="btn btn-primary" onclick="startReenrollmentCapture()">Start Recapture Sequence</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let streamTrack = null;
+        let captureInterval = null;
+        const totalImagesNeeded = 20; // Capturing 20 frames for retraining matrix
+
+        // Fetch students and populate table rows asynchronously
+        document.addEventListener("DOMContentLoaded", loadStudentsDirectory);
+
+        function loadStudentsDirectory() {
+            fetch('/students')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById("studentTableBody");
+                    tbody.innerHTML = "";
+                    
+                    if(data.students.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No student records found in the system.</td></tr>`;
+                        return;
+                    }
+
+                    data.students.forEach(s => {
+                        const row = `
+                            <tr id="row-${s.id}">
+                                <td><strong>${s.id}</strong></td>
+                                <td>${s.name}</td>
+                                <td>${s.roll || '-'}</td>
+                                <td>${s.class || '-'}</td>
+                                <td>${s.section || '-'}</td>
+                                <td>${s.reg_no || '-'}</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning me-2 fw-semibold" onclick="openReenrollModal(${s.id}, '${s.name}')">
+                                        🔄 Re-enroll Face
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteStudentProfile(${s.id})">
+                                        🗑️ Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                })
+                .catch(err => console.error("Error loading registry data stream:", err));
+        }
+
+        // Handle opening the camera feed view modal
+        function openReenrollModal(id, name) {
+            document.getElementById("currentStudentId").value = id;
+            document.getElementById("modalTitle").innerText = `Re-enroll Face Data: ${name} (ID: ${id})`;
+            
+            // Reset modal progress indicators
+            document.getElementById("captureProgress").style.width = "0%";
+            document.getElementById("captureProgress").innerText = "0%";
+            document.getElementById("statusText").innerText = "Webcam initializing...";
+            document.getElementById("startCaptureBtn").disabled = false;
+
+            const modal = new bootstrap.Modal(document.getElementById('reenrollModal'));
+            modal.show();
+
+            // Fire up system video stream capture pipe
+            navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
+                .then(stream => {
+                    const video = document.getElementById("webcam");
+                    video.srcObject = stream;
+                    streamTrack = stream.getTracks()[0];
+                    document.getElementById("statusText").innerText = "Camera streaming live. Click 'Start Recapture Sequence'.";
+                })
+                .catch(err => {
+                    console.error("Camera hook failed:", err);
+                    document.getElementById("statusText").innerText = "Error: Access to camera denied.";
+                });
+        }
+
+        // Automated continuous multi-frame dataset collection sequence
+        function startReenrollmentCapture() {
+            const sid = document.getElementById("currentStudentId").value;
+            const video = document.getElementById("webcam");
+            const btn = document.getElementById("startCaptureBtn");
+            
+            btn.disabled = true;
+            let savedCount = 0;
+            
+            // Set up a hidden canvas tool layer to extract frame states
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext("2d");
+
+            document.getElementById("statusText").innerText = "Capturing face frames...";
+
+            // Snapshot interval processor running every 250 milliseconds
+            captureInterval = setInterval(() => {
+                if (savedCount >= totalImagesNeeded) {
+                    clearInterval(captureInterval);
+                    document.getElementById("statusText").innerText = "Batch sequence captured safely! Saving updates...";
+                    return;
+                }
+
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    const formData = new FormData();
+                    formData.append("student_id", sid);
+                    formData.append("images[]", blob, `frame_${savedCount}.jpg`);
+
+                    fetch("/upload_face", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        savedCount++;
+                        let percentage = Math.round((savedCount / totalImagesNeeded) * 100);
+                        
+                        const progBar = document.getElementById("captureProgress");
+                        progBar.style.width = `${percentage}%`;
+                        progBar.innerText = `${percentage}% (${savedCount}/${totalImagesNeeded})`;
+
+                        if (savedCount === totalImagesNeeded) {
+                            document.getElementById("statusText").innerHTML = `<span class="text-success">✔ Re-enrollment Complete! Remember to trigger system re-training on the dashboard.</span>`;
+                            stopCamera();
+                        }
+                    })
+                    .catch(err => console.error("API Upload failed:", err));
+                }, "image/jpeg", 0.9);
+
+            }, 250);
+        }
+
+        // Safely kill running tracking variables to release hardware focus
+        function stopCamera() {
+            if (captureInterval) clearInterval(captureInterval);
+            if (streamTrack) {
+                streamTrack.stop();
+                streamTrack = null;
+            }
+            const video = document.getElementById("webcam");
+            if (video) video.srcObject = null;
+        }
+
+        // Seamless integrated deletion helper row hook
+        function deleteStudentProfile(sid) {
+            if(confirm("Are you absolutely sure you want to completely remove this student profile along with all associated datasets and attendance records?")) {
+                fetch(`/students/${sid}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.deleted) {
+                            const targetRow = document.getElementById(`row-${sid}`);
+                            if(targetRow) targetRow.remove();
+                        }
+                    })
+                    .catch(err => console.error("Error purging record:", err));
+            }
+        }
+    </script>
+</body>
+</html>

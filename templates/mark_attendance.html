@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Mark Attendance</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+    background:#f4f7fb;
+    font-family:'Segoe UI',sans-serif;
+}
+
+.page-title{
+    font-weight:700;
+    color:#0f172a;
+}
+
+.main-card{
+    border:none;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+.video-card{
+    border:none;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+.video-box{
+    overflow:hidden;
+    border-radius:12px;
+    border:2px solid #e2e8f0;
+}
+
+#markVideo{
+    width:100%;
+    max-width:700px;
+}
+
+.status-box{
+    background:#f8fafc;
+    padding:15px;
+    border-radius:12px;
+    margin-top:15px;
+}
+
+.present-count{
+    font-size:32px;
+    font-weight:700;
+    color:#16a34a;
+}
+
+.list-group-item{
+    border-radius:10px !important;
+    margin-bottom:8px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container py-5">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<h2 class="page-title">
+Live Attendance Monitoring
+</h2>
+
+<div>
+    <a href="/manage_students" class="btn btn-outline-primary me-2">
+        Manage Students
+    </a>
+    <a href="/" class="btn btn-outline-secondary">
+        Dashboard
+    </a>
+</div>
+
+</div>
+
+<div class="row g-4">
+
+<div class="col-lg-8">
+
+<div class="card video-card">
+<div class="card-body">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<h5>
+Camera Feed
+</h5>
+
+<div>
+
+<button id="startMarkBtn" class="btn btn-success">
+    Start Attendance
+</button>
+
+<button id="stopMarkBtn" class="btn btn-danger" disabled>
+    Stop
+</button>
+
+</div>
+
+</div>
+
+<div class="text-center">
+
+<div class="video-box">
+<video
+id="markVideo"
+autoplay
+muted
+playsinline>
+</video>
+</div>
+
+<div class="status-box">
+
+<div id="markStatus"
+class="fw-semibold text-muted">
+Waiting for recognition...
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="card main-card mb-4">
+<div class="card-body text-center">
+
+<h6 class="text-muted">
+Students Present
+</h6>
+
+<div id="presentCount"
+class="present-count">
+0
+</div>
+
+</div>
+</div>
+
+<div class="card main-card">
+<div class="card-body">
+
+<h5 class="mb-3">
+Recognized Students
+</h5>
+
+<ul id="recognizedList"
+class="list-group">
+</ul>
+
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+(function() {
+  // 1. Setup elements securely inside an isolated scope
+  const localRecognizedList = document.getElementById("recognizedList");
+  const presentCount = document.getElementById("presentCount");
+  const startMarkBtn = document.getElementById("startMarkBtn");
+  const stopMarkBtn = document.getElementById("stopMarkBtn");
+  const markVideo = document.getElementById("markVideo");
+  const markStatus = document.getElementById("markStatus");
+
+  let markStream = null;
+  let isScanning = false;
+  let localRecognizedIds = new Set();
+
+  // 2. Setup the automatic student counting observer safely
+  if (localRecognizedList && presentCount) {
+    const observer = new MutationObserver(() => {
+        presentCount.innerText = localRecognizedList.children.length;
+    });
+    observer.observe(localRecognizedList, { childList: true });
+  }
+
+  if (!startMarkBtn || !stopMarkBtn || !markVideo || !markStatus) {
+    console.error("Smart Attendance Error: Missing critical layout elements.");
+    return;
+  }
+
+  // 3. Camera execution controller
+  startMarkBtn.addEventListener("click", async () => {
+    startMarkBtn.disabled = true;
+    stopMarkBtn.disabled = false;
+    try {
+      markStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: 640, height: 480 } 
+      });
+      markVideo.srcObject = markStream;
+      
+      await new Promise((resolve) => {
+        markVideo.onloadedmetadata = () => resolve();
+      });
+      
+      await markVideo.play();
+      markStatus.innerText = "Scanning...";
+      
+      isScanning = true;
+      captureAndRecognizeLoop();
+    } catch (err) {
+      alert("Camera initialization error: " + err.message);
+      startMarkBtn.disabled = false;
+      stopMarkBtn.disabled = true;
+    }
+  });
+
+  stopMarkBtn.addEventListener("click", () => {
+    isScanning = false; 
+    if (markStream) {
+      markStream.getTracks().forEach(t => t.stop());
+    }
+    startMarkBtn.disabled = false;
+    stopMarkBtn.disabled = true;
+    markStatus.innerText = "Stopped";
+  });
+
+  // 4. Face tracking frame loops
+  async function captureAndRecognizeLoop() {
+    if (!isScanning) return; 
+
+    const canvas = document.createElement("canvas");
+    canvas.width = markVideo.videoWidth || 640;
+    canvas.height = markVideo.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    
+    ctx.drawImage(markVideo, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
+    
+    const fd = new FormData();
+    fd.append("image", blob, "snap.jpg");
+
+    try {
+      const res = await fetch("/recognize_face", { method: "POST", body: fd });
+      const j = await res.json();
+
+      if (j.recognized) {
+        if (j.message === "Already marked present today") {
+            markStatus.innerText = `${j.name} - Already checked in today.`;
+        } else {
+            markStatus.innerText = `Recognized: ${j.name} (${Math.round(j.confidence * 100)}%)`;
+        }
+        
+        if (!localRecognizedIds.has(j.student_id)) {
+          localRecognizedIds.add(j.student_id);
+          
+          const li = document.createElement("li");
+          li.className = "list-group-item d-flex justify-content-between align-items-center";
+          li.innerHTML = `<strong>${j.name}</strong> <span class="badge bg-success">${new Date().toLocaleTimeString()}</span>`;
+          
+          if (localRecognizedList) {
+            localRecognizedList.prepend(li);
+          }
+        }
+      } else {
+        if (j.error) markStatus.innerText = `Scan message: ${j.error}`;
+        else markStatus.innerText = `Face not recognized`;
+      }
+    } catch (err) {
+      console.error("Inference Error:", err);
+      markStatus.innerText = "Server communication error...";
+    }
+
+    if (isScanning) {
+      setTimeout(captureAndRecognizeLoop, 1200);
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
