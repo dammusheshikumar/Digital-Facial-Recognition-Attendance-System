@@ -28,32 +28,17 @@ body{
     color:#0f172a;
 }
 
-.stat-card{
-    border:none;
-    border-radius:18px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.08);
-    transition:0.2s;
-}
-
-.stat-card:hover{
-    transform:translateY(-4px);
-}
-
-.action-card{
-    border:none;
-    border-radius:18px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.08);
-}
-
+.action-card,
 .chart-card{
     border:none;
     border-radius:18px;
     box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
 
-.big-number{
-    font-size:32px;
-    font-weight:700;
+.action-card:hover,
+.chart-card:hover{
+    transform:translateY(-4px);
+    transition:0.2s;
 }
 
 .progress{
@@ -107,52 +92,6 @@ Dashboard
 
 <div class="row g-4">
 
-<div class="col-md-4">
-
-<div class="card stat-card p-4">
-<h6 class="text-muted">Face Recognition</h6>
-<div class="big-number text-primary">
-AI
-</div>
-<p class="mb-0 text-muted">
-OpenCV + Random Forest
-</p>
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card stat-card p-4">
-<h6 class="text-muted">Database</h6>
-<div class="big-number text-success">
-SQL
-</div>
-<p class="mb-0 text-muted">
-SQLite Storage
-</p>
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card stat-card p-4">
-<h6 class="text-muted">Backend</h6>
-<div class="big-number text-danger">
-Flask
-</div>
-<p class="mb-0 text-muted">
-Python Web Framework
-</p>
-</div>
-
-</div>
-
-</div>
-
-<div class="row mt-4 g-4">
-
 <div class="col-lg-4">
 
 <div class="card action-card p-4">
@@ -193,8 +132,7 @@ View Records
 Train Recognition Model
 </h5>
 
-<button id="trainBtn"
-class="btn btn-outline-primary">
+<button id="trainBtn" class="btn btn-outline-primary">
 Start Training
 </button>
 
@@ -251,3 +189,4 @@ Attendance Analytics (Last 30 Days)
 
 </body>
 </html>
+
