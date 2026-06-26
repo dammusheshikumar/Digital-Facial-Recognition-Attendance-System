@@ -1,9 +1,5 @@
 # 🎓 Digital Facial Recognition Attendance System
 
-<p align="center">
-  <img src="readme.png" alt="Digital Facial Recognition Attendance System" width="100%">
-</p>
-
 ## 📖 Overview
 
 The **Digital Facial Recognition Attendance System** is an AI-powered web application that automates attendance using facial recognition technology. Instead of relying on traditional methods such as manual registers or RFID cards, the system identifies individuals in real time using computer vision and machine learning, ensuring **accuracy, security, and efficiency**.
